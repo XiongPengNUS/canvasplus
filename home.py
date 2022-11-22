@@ -12,7 +12,7 @@ def get_student_id(course):
 
     return [p.user['id'] for p in course.get_enrollments() 
             if p.role == 'StudentEnrollment' and 
-            p.user['integration_id'] is not None]
+            p.user['name'] != 'Test student']
 
 
 @st.cache
