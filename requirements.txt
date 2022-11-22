@@ -3,3 +3,4 @@ pandas
 canvasapi
 requests
 ipython
+xlsxwriter
