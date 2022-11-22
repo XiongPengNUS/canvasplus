@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import requests
 
-from streamlit import caching
 from canvasapi import Canvas
 from IPython.core.display import display,HTML
 from io import BytesIO
