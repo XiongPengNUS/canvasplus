@@ -52,6 +52,7 @@ def get_user_profile(token, course_name, roles, selected_cat):
     return profiles
 
 
+@st.experimental_singleton(suppress_st_warning=True)
 def get_group_idx(token, cours_name, cat_columns):
 
     url = 'https://canvas.nus.edu.sg/'
