@@ -7,6 +7,8 @@ from canvasapi.exceptions import InvalidAccessToken
 from IPython.core.display import HTML
 from io import BytesIO
 
+# package to convert image to PIL to grab dimensions
+from PIL import Image 
 
 @st.experimental_singleton(suppress_st_warning=True)
 def get_roles(token, course_name):
@@ -133,9 +135,20 @@ def to_excel(token, course_name, selected_cat, info_columns, info, cat_columns):
         for i, profile in enumerate(profiles):
             image_url = profile['avatar_url']
             response = requests.get(image_url)
+
+            # convert image to PIL image
+            img1 = Image.open(BytesIO(response.content))  
+            img_width = img1.width
+            img_height = img1.height
+
+            scalex = 200/img_width
+            scaley = 250/img_height
+
+            
+
             worksheet.insert_image(i+1, index, image_url, 
                                    {'image_data': BytesIO(response.content),
-                                    'x_scale': 0.2, 'y_scale': 0.2})
+                                    'x_scale': scalex, 'y_scale': scaley})
             worksheet.set_row(i+1, 80)
 
             data_bar.progress(((i+1)/n))
