@@ -1,0 +1,6 @@
+streamlit >= 1.7.0
+pandas
+canvasapi
+requests
+ipython
+xlsxwriter
