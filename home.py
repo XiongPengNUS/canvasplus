@@ -137,12 +137,14 @@ def to_excel(token, course_name, selected_cat, info_columns, info, cat_columns):
             response = requests.get(image_url)
 
             # convert image to PIL image
-            img = Image.open(BytesIO(response.content))  
-            img_width = img.width
-            img_height = img.height
+            img1 = Image.open(BytesIO(response.content))  
+            img_width = img1.width
+            img_height = img1.height
 
-            scalex = 100/img_width
-            scaley = 110/img_height
+            scalex = 200/img_width
+            scaley = 250/img_height
+
+            
 
             worksheet.insert_image(i+1, index, image_url, 
                                    {'image_data': BytesIO(response.content),
