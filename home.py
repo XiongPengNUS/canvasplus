@@ -1,12 +1,13 @@
 import streamlit as st
 import pandas as pd
 import requests
+import math
 
 from canvasapi import Canvas
 from canvasapi.exceptions import InvalidAccessToken
 from IPython.core.display import HTML
 from io import BytesIO
-
+from PIL import Image
 
 @st.experimental_singleton(suppress_st_warning=True)
 def get_roles(token, course_name):
@@ -133,17 +134,25 @@ def to_excel(token, course_name, selected_cat, info_columns, info, cat_columns):
         for i, profile in enumerate(profiles):
             image_url = profile['avatar_url']
             response = requests.get(image_url)
+
+            img = Image.open(BytesIO(response.content))
+            # img = img.resize([math.ceil(d) for d in img.info['dpi']])
+            byteIO = BytesIO()
+            img.save(byteIO, format='PNG')
             worksheet.insert_image(i+1, index, image_url, 
-                                   {'image_data': BytesIO(response.content),
-                                    'x_scale': 0.2, 'y_scale': 0.2})
+                                   {'image_data': byteIO,
+                                    'x_scale': 0.8, 'y_scale': 0.8})
             worksheet.set_row(i+1, 80)
+
+            # Test
+            # im = Image.open(BytesIO(requests.get(image_url).content))
+            # st.write(im.size)
 
             data_bar.progress(((i+1)/n))
 
     writer.save()
     processed_data = output.getvalue()
     return processed_data
-
 
 st.write("# Canvas Plus!")
 st.write("This App supports extra features for Canvas.")
@@ -173,8 +182,6 @@ if token != '':
             group_cats = {cat.name: cat for cat in course.get_group_categories()}
             if is_cat_filter:
                 selected_cat = st.selectbox('Group Categories: ', group_cats)
-                #group_cat_columns = st.multiselect('Group Categories: ', group_cats)
-                #selected_cats = '+++'.join([group_cats[c] for c in group_cat_columns])
             else:
                 selected_cat = ''
             
@@ -201,18 +208,63 @@ if token != '':
                 df_xlsx = to_excel(token, course_name, selected_cat, info_columns, info, cat_columns)
                 st.download_button('Download', df_xlsx, file_name= 'students.xlsx')
 
-                #for cat in selected_cats:
-                #    for g in cat.get_groups():
-                #        p_id = [p.id for p in g.get_users()]
-                #        df.loc[p_id, cat.name] = g.name
-
-                # df_xlsx = to_excel(df, profiles)
-                # st.download_button('Download', df_xlsx, file_name= 'students.xlsx')
                 st.write(df.to_html(escape=False), unsafe_allow_html=True)
+        
+        elif task == tasks[1]:
+
+            thread = []
+            name = []
+            date = []
+            topics_dates = {}
+
+            # only_pinned = st.checkbox('Only pinned topics', value=False)
+            all_topics = course.get_discussion_topics()
+            topic_dict = {t.__str__(): t for t in all_topics}
+            selected_topics = st.multiselect('Topics', topic_dict, topic_dict)
+            to_generate = st.button('Generate')
+
+            if to_generate:
+                for topic_name in selected_topics:
+                    topic = topic_dict[topic_name]
+                    topics_dates[topic.title] = topic.created_at
+                    entries = list(topic.get_topic_entries())
+                    n = len(entries)
+                    st.write(f'{topic.__str__()}')
+                    if n > 0:
+                        data_bar = st.progress(0.0)
+                    else:
+                        data_bar = st.progress(1.0)
+                    for i, a in enumerate(topic.get_topic_entries()):
+                        thread.append(topic.title)
+                        name.append(a.user_name)
+                        date.append(a.updated_at_date)
+                        for b in a.get_replies():
+                            thread.append(topic.title)
+                            name.append(b.user_name)
+                            date.append(b.updated_at_date)
+                        data_bar.progress(((i+1)/n))
             
-            # with col2:
-            #     df_xlsx = to_excel(token, course_name, selected_cats, info_columns, info)
-            #     st.download_button('Download', df_xlsx, file_name= 'students.xlsx')
+                posts = pd.DataFrame({'Name': name, 'Topics': thread, 'Date': date})
+
+                st.write('#### Discussion Board Records: ')
+                results = posts['Topics'].value_counts()
+                results.name = 'Replies'
+                st.write(results)
+
+                posts['Date'] = posts['Date'].dt.tz_localize(None)
+                # posts.to_excel('discussion.xlsx', index=False)
+
+                output = BytesIO()
+                writer = pd.ExcelWriter(output, engine='xlsxwriter')
+                posts.to_excel(writer, index=False, sheet_name='Sheet1')
+                # workbook = writer.book
+                # worksheet = writer.sheets['Sheet1']
+                writer.save()
+                posts_xlsx = output.getvalue()
+
+                st.download_button('Download', posts_xlsx, file_name= 'discussion.xlsx')
+
+
 
     except InvalidAccessToken:
         st.error('Invalid access token!')
