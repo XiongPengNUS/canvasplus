@@ -9,7 +9,7 @@ from IPython.core.display import HTML
 from io import BytesIO
 from PIL import Image
 
-@st.experimental_singleton(suppress_st_warning=True)
+@st.st.cache_resource(suppress_st_warning=True)
 def get_roles(token, course_name):
 
     url = 'https://canvas.nus.edu.sg/'
@@ -21,7 +21,7 @@ def get_roles(token, course_name):
             for p in course.get_enrollments()}
 
 
-@st.experimental_singleton(suppress_st_warning=True)
+@st.st.cache_resource(suppress_st_warning=True)
 def get_user_profile(token, course_name, roles, selected_cat):
 
     url = 'https://canvas.nus.edu.sg/'
@@ -53,7 +53,7 @@ def get_user_profile(token, course_name, roles, selected_cat):
     return profiles
 
 
-@st.experimental_singleton(suppress_st_warning=True)
+@st.st.cache_resource(suppress_st_warning=True)
 def get_group_idx(token, cours_name, cat_columns):
 
     url = 'https://canvas.nus.edu.sg/'
@@ -74,7 +74,7 @@ def get_group_idx(token, cours_name, cat_columns):
     return cat_dict
 
 
-@st.experimental_singleton(suppress_st_warning=True)
+@st.st.cache_resource(suppress_st_warning=True)
 def gen_preview_table(token, course_name, selected_cat, info_columns, info, cat_columns):
 
     # User roles:
@@ -107,7 +107,7 @@ def gen_preview_table(token, course_name, selected_cat, info_columns, info, cat_
     return  df, profiles
 
 
-@st.experimental_singleton(suppress_st_warning=True)
+@st.st.cache_resource(suppress_st_warning=True)
 def to_excel(token, course_name, selected_cat, info_columns, info, cat_columns):
 
     df, profiles = gen_preview_table(token, course_name, selected_cat, 
@@ -214,6 +214,7 @@ if token != '':
 
             thread = []
             name = []
+            student_num = []
             date = []
             topics_dates = {}
 
@@ -235,16 +236,23 @@ if token != '':
                     else:
                         data_bar = st.progress(1.0)
                     for i, a in enumerate(topic.get_topic_entries()):
-                        thread.append(topic.title)
-                        name.append(a.user_name)
-                        date.append(a.updated_at_date)
-                        for b in a.get_replies():
+                        try: 
+                            sn = course.get_user(a.user_id).integration_id
                             thread.append(topic.title)
-                            name.append(b.user_name)
-                            date.append(b.updated_at_date)
+                            name.append(a.user_name)
+                            student_num.append(sn)
+                            date.append(a.updated_at_date)
+                            for b in a.get_replies():
+                                thread.append(topic.title)
+                                name.append(b.user_name)
+                                student_num.append(course.get_user(b.user_id).integration_id)
+                                date.append(b.updated_at_date)
+                        except:
+                            st.write(f'{a.user_name} dropped the module.')
                         data_bar.progress(((i+1)/n))
             
-                posts = pd.DataFrame({'Name': name, 'Topics': thread, 'Date': date})
+                posts = pd.DataFrame({'Name': name, 'Number': student_num, 
+                                      'Topics': thread, 'Date': date})
 
                 st.write('#### Discussion Board Records: ')
                 results = posts['Topics'].value_counts()
@@ -263,8 +271,6 @@ if token != '':
                 posts_xlsx = output.getvalue()
 
                 st.download_button('Download', posts_xlsx, file_name= 'discussion.xlsx')
-
-
 
     except InvalidAccessToken:
         st.error('Invalid access token!')
