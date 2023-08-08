@@ -150,7 +150,8 @@ def to_excel(token, course_name, selected_cat, info_columns, info, cat_columns):
 
             data_bar.progress(((i+1)/n))
 
-    writer.save()
+    #writer.save()
+    writer.close()
     processed_data = output.getvalue()
     return processed_data
 
@@ -267,7 +268,8 @@ if token != '':
                 posts.to_excel(writer, index=False, sheet_name='Sheet1')
                 # workbook = writer.book
                 # worksheet = writer.sheets['Sheet1']
-                writer.save()
+                # writer.save()
+                writer.close()
                 posts_xlsx = output.getvalue()
 
                 st.download_button('Download', posts_xlsx, file_name= 'discussion.xlsx')
