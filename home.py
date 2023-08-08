@@ -9,7 +9,7 @@ from IPython.core.display import HTML
 from io import BytesIO
 from PIL import Image
 
-@st.cache_resource(suppress_st_warning=True)
+@st.cache_resource
 def get_roles(token, course_name):
 
     url = 'https://canvas.nus.edu.sg/'
@@ -21,7 +21,7 @@ def get_roles(token, course_name):
             for p in course.get_enrollments()}
 
 
-@st.cache_resource(suppress_st_warning=True)
+@st.cache_resource
 def get_user_profile(token, course_name, roles, selected_cat):
 
     url = 'https://canvas.nus.edu.sg/'
@@ -53,7 +53,7 @@ def get_user_profile(token, course_name, roles, selected_cat):
     return profiles
 
 
-@st.cache_resource(suppress_st_warning=True)
+@st.cache_resource
 def get_group_idx(token, cours_name, cat_columns):
 
     url = 'https://canvas.nus.edu.sg/'
@@ -74,7 +74,7 @@ def get_group_idx(token, cours_name, cat_columns):
     return cat_dict
 
 
-@st.cache_resource(suppress_st_warning=True)
+@st.cache_resource
 def gen_preview_table(token, course_name, selected_cat, info_columns, info, cat_columns):
 
     # User roles:
@@ -107,7 +107,7 @@ def gen_preview_table(token, course_name, selected_cat, info_columns, info, cat_
     return  df, profiles
 
 
-@st.cache_resource(suppress_st_warning=True)
+@st.cache_resource
 def to_excel(token, course_name, selected_cat, info_columns, info, cat_columns):
 
     df, profiles = gen_preview_table(token, course_name, selected_cat, 
