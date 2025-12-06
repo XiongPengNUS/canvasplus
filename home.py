@@ -45,8 +45,12 @@ def get_user_profile(token, course_name, roles, selected_cat):
 
     n = len(all_users)
     for i, p in enumerate(all_users):
-        if roles[p.id] == 'StudentEnrollment' and p.name != 'Test student':
+        try:
             profiles.append(p.get_profile())
+        except:
+            pass
+        # if roles[p.id] == 'StudentEnrollment' and p.name != 'Test student':
+        #    profiles.append(p.get_profile())
 
         profile_bar.progress((i+1) / n)
 
@@ -239,19 +243,20 @@ if token != '':
                     for i, a in enumerate(topic.get_topic_entries()):
                         try: 
                             sn = course.get_user(a.user_id).integration_id
-                            thread.append(topic.title)
-                            name.append(a.user_name)
                             student_num.append(sn)
                             date.append(a.updated_at_date)
+                            name.append(a.user_name)
+                            thread.append(topic.title)
                             for b in a.get_replies():
-                                thread.append(topic.title)
-                                name.append(b.user_name)
                                 student_num.append(course.get_user(b.user_id).integration_id)
                                 date.append(b.updated_at_date)
+                                name.append(b.user_name)
+                                thread.append(topic.title)
                         except:
                             st.write(f'{a.user_name} dropped the module.')
                         data_bar.progress(((i+1)/n))
             
+                print(len(name), len(student_num), len(thread), len(date))
                 posts = pd.DataFrame({'Name': name, 'Number': student_num, 
                                       'Topics': thread, 'Date': date})
 
